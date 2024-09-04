@@ -19,5 +19,4 @@ File operations for importing quotes
 ## Prerequisites
 Poetry
 SQLite (or your chosen database system)
-pyhton 3
-
+pyhton 3.12
