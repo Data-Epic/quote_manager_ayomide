@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "quote-manage"
+version = "0.1.0"
+description = "A CLI application for managing inspirational quotes"
+authors = ["Adesomoju Ayomide <Ayomide@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+click = "^8.1.7"
+sqlalchemy = "^2.0.33"
+pytest = "^8.3.2"
+decouple = "^0.0.7"
+duckdb = "0.8.1"
+duckdb-engine = "^0.13.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
