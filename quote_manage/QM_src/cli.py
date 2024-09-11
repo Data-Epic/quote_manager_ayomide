@@ -69,6 +69,85 @@ def cli():
     pass
 
 @cli.command()
+@click.option("--file_path",default='data/quotes.json', help="Path to the json file containing quotes")
+def import_quotes(file_path:str):
+    """
+    Import quotes from a json file to the database
+    """
+    try:
+        with get_db() as db:
+            data = load_data(file_path)
+
+            data = query_existing_data(Quote, data, db)
+            existing_ids = data["existing_ids"]
+            record_list = data["record_list"]
+
+            no_data = 0
+            #load data that does not exist in the database to avoid duplicates
+            for record in record_list:
+                if record["id"] not in existing_ids:
+                    record = Quote(category=record['category'], 
+                                   id = record["id"],
+                                   author = record["author"],
+                                   quote = record["quote"])
+                    db.add(record)
+                    no_data += 1
+            db.commit()
+            click.echo(f"{no_data} data imported to database successfully from {file_path}")
+            logging.info("Data imported to database successfully")
+
+    except Exception as e:
+        click.echo(f"Error occurred during database operation: {str(e)}")
+        error_logger.error(f"Error occurred during database operation: {str(e)}")
+
+@cli.command()
+@click.option("--category", default=None, help="Category of the quote")
+def generate(category:str):
+    """
+    Generates a random quote from the database
+    by passing a category
+    """
+    try:
+        with get_db() as db:
+            if category:
+                all_categories = db.query(Quote.category).distinct().all()
+                all_categories = [category[0] for category in all_categories]
+
+                if category not in all_categories:
+                    click.echo({
+                                   "status": "error",
+                                   "message": f"{category} is not found in the database"
+                               })
+
+                quotes = db.query(Quote).filter(Quote.category == category).all()
+
+            else:
+                quotes = db.query(Quote).all()
+
+            if quotes:
+                quote = random.choice(quotes)
+                if isinstance(quote, Quote):
+                    quote = quote.__dict__
+                elif isinstance(quote, dict):
+                    quote = quote
+                else:
+                    raise ValueError("Invalid quote format")
+              
+                click.echo({
+                    "status": "success",
+                    "quote": quote.get("quote"),
+                    "category": quote.get("category"),
+                    "author": quote.get("author")
+                })
+            else:
+                click.echo("No quotes found.")
+                error_logger.error("No quotes could be generated")
+        
+    except Exception as e:
+        click.echo(f"Error occurred during database operation: {str(e)}")
+        error_logger.error(f"Error occurred during database operation: {str(e)}")
+
+@cli.command()
 @click.option('--category', prompt='Enter the category', help='The category of the quote',required=True)
 @click.option('--quote', prompt='Enter the quote text', help='The text of the quote',required=True)
 @click.option('--author', prompt='Enter the author', help='The author of the quote',required=True)
@@ -132,11 +211,5 @@ def list_quotes(category:str):
     except Exception as e:
         click.echo(f"Error occurred during database operation: {str(e)}")
         error_logger.error(f"Error occurred during database operation: {str(e)}")
-
-#@cli.command()
-#@click.option('--category', help='Filter quotes by category')
-#@click.option('--limit', default=5, help='Number of quotes to list (default: 5)')
-
-
 if __name__ == '__main__':
     cli()
