@@ -1,8 +1,8 @@
 import click
 import os
 import logging
-from .database import init_db, get_db
-from .models import Quote
+from QM_src.database import init_db, get_db
+from QM_src.models import Quote
 import json
 import random
 from sqlalchemy import func
